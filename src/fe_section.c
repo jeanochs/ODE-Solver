@@ -4,92 +4,113 @@
 #include "composition_functions.c"
 
 // Function to free the memory allocated by the Mesh object
+void free_element_memory(struct Element_Linear* ele) {
+	// This function (for right now) really just frees the pointers allocated for the GSL functions
+	switch(ele->kind) {
+		case LINEAR:
+			free(ele->element.L2.jacobian.params);
+			free(ele->element.L2.iso_conversion.params);
+			break;
+		case QUAD:
+			free(ele->element.L3.jacobian.params);
+			free(ele->element.L3.iso_conversion.params);
+			break;
+	}
+
+}
+
 void free_mesh_memory(struct Mesh* input_mesh) {
 	free(input_mesh->connectivity_grid);
+	// Free the memory of the individual element first, then the element pointer itself
+	for (int e = 0; e < input_mesh->num_elements; e++) {
+		free_element_memory(&input_mesh->elements[e]);
+	}
+
 	free(input_mesh->elements);
 
 }
 
-struct Element_Linear create_element_L2(double node1, double node2) {
+void create_element_L2(struct Element_Linear* e, double node1, double node2) {
 	// Create element object
-	struct Element_Linear e;
-	e.kind = LINEAR;
+	e->kind = LINEAR;
 
-	e.element.L2.node_coord[0] = node1;
-	e.element.L2.node_coord[1] = node2;
+	e->element.L2.node_coord[0] = node1;
+	e->element.L2.node_coord[1] = node2;
 
 	// Populate the shape functions and their derivatives
-	e.element.L2.shape_func[0] = L2_N0;
-	e.element.L2.shape_func[1] = L2_N1;
-	e.element.L2.shape_derv[0] = L2_N0_D;
-	e.element.L2.shape_derv[1] = L2_N1_D;
+	e->element.L2.shape_func[0] = L2_N0;
+	e->element.L2.shape_func[1] = L2_N1;
+	e->element.L2.shape_derv[0] = L2_N0_D;
+	e->element.L2.shape_derv[1] = L2_N1_D;
 
 	// Populate the Jacobian equation and the isoparametric-physical relation
 	// Jacobian assembly into GSL function
 	struct L2_N_P p = {node1, node2};
+	struct L2_N_P* p_perpetual = malloc(sizeof(struct L2_N_P));
+	*p_perpetual = p; // Copy p here to avoid the out-of-scope errors gotten earlier
 	gsl_function j;
 	j.function = &J_L2;
-	j.params = &p;
+	j.params = p_perpetual; // Will be valid after this function exits since the address is on the heap
 
-	e.element.L2.jacobian = j;
+	e->element.L2.jacobian = j;
 
 	// Isoparametric assembly into GSL function
 	struct Iso_Phy_Funcs p1 = {
 		2,
-		e.element.L2.node_coord,
-		e.element.L2.shape_func
+		e->element.L2.node_coord,
+		e->element.L2.shape_func
 	};
+	struct Iso_Phy_Funcs* p1_perpetual = malloc(sizeof(struct Iso_Phy_Funcs));
+	*p1_perpetual = p1; // Storing object on heap-allocated object, as was done above-> 
 
 	gsl_function iso;
 	iso.function = &isoparametric_physical_conversion;
-	iso.params = &p1;
+	iso.params = p1_perpetual;
 	
-	e.element.L2.iso_conversion = iso;
-
-	return e;
+	e->element.L2.iso_conversion = iso;
 
 }
 
-struct Element_Linear create_element_L3(double node1, double node2, double node3) {
-	// Create element object
-	struct Element_Linear e;
-	e.kind = LINEAR;
+void create_element_L3(struct Element_Linear* e, double node1, double node2, double node3) {
+	e->kind = QUAD;
 
-	e.element.L3.node_coord[0] = node1;
-	e.element.L3.node_coord[1] = node2;
-	e.element.L3.node_coord[2] = node3;
+	e->element.L3.node_coord[0] = node1;
+	e->element.L3.node_coord[1] = node2;
+	e->element.L3.node_coord[2] = node3;
 
 	// Populate the shape functions and their derivatives
-	e.element.L3.shape_func[0] = L3_N0;
-	e.element.L3.shape_func[1] = L3_N1;
-	e.element.L3.shape_func[2] = L3_N2;
-	e.element.L3.shape_derv[0] = L3_N0_D;
-	e.element.L3.shape_derv[1] = L3_N1_D;
-	e.element.L3.shape_derv[2] = L3_N2_D;
+	e->element.L3.shape_func[0] = L3_N0;
+	e->element.L3.shape_func[1] = L3_N1;
+	e->element.L3.shape_func[2] = L3_N2;
+	e->element.L3.shape_derv[0] = L3_N0_D;
+	e->element.L3.shape_derv[1] = L3_N1_D;
+	e->element.L3.shape_derv[2] = L3_N2_D;
 
 	// Populate the Jacobian equation and the isoparametric-physical relation
 	// Jacobian assembly into GSL function
 	struct L3_N_P p = {node1, node2, node3};
+	struct L3_N_P* p_perpetual = malloc(sizeof(struct L3_N_P));
+	*p_perpetual = p; // Copy p here to avoid the out-of-scope errors gotten earlier
 	gsl_function j;
 	j.function = &J_L3;
-	j.params = &p;
+	j.params = p_perpetual;
 
-	e.element.L3.jacobian = j;
+	e->element.L3.jacobian = j;
 
 	// Isoparametric assembly into GSL function
 	struct Iso_Phy_Funcs p1 = {
 		3,
-		e.element.L3.node_coord,
-		e.element.L3.shape_func
+		e->element.L3.node_coord,
+		e->element.L3.shape_func
 	};
+	struct Iso_Phy_Funcs* p1_perpetual = malloc(sizeof(struct Iso_Phy_Funcs));
+	*p1_perpetual = p1; // Storing object on heap-allocated object, as was done above
 
 	gsl_function iso;
 	iso.function = &isoparametric_physical_conversion;
-	iso.params = &p1;
+	iso.params = p1_perpetual;
 	
-	e.element.L3.iso_conversion = iso;
-
-	return e;
+	e->element.L3.iso_conversion = iso;
 
 }
 
@@ -158,7 +179,8 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 			}
 
 			for (int i = 1; i < num_nodes; i++) {
-				struct Element_Linear ele = create_element_L2(node_coors[i - 1], node_coors[i]);
+				struct Element_Linear ele;
+				create_element_L2(&ele, node_coors[i - 1], node_coors[i]);
 
 				// Add the ready element to the element array
 				element_array[i - 1] = ele;
@@ -190,7 +212,8 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 			}
 
 			for (int i = 2; i < num_nodes; i++) {
-				struct Element_Linear ele = create_element_L3(node_coors[i - 2], node_coors[i - 1],  node_coors[i]);
+				struct Element_Linear ele;
+				create_element_L3(&ele, node_coors[i - 2], node_coors[i - 1],  node_coors[i]);
 
 
 				// Add the ready element to the element array
@@ -229,7 +252,8 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 							 struct Constant_Vector_Funcs p = {
 								 driving_func,
 								 element->element.L2.shape_func[n],
-								 &element->element.L2.iso_conversion
+								 &element->element.L2.iso_conversion,
+								 &element->element.L2.jacobian
 							 };
 
 							 constant_vector.function = &constant_vector_composition;
@@ -239,7 +263,7 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 							 // Perform Gauss quadrature and add to the n-th entry
 							 // Make the workspace first
 							 gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-									 1,
+									 2,
 									 -1,
 									 1,
 									 0, // Ignored
@@ -265,7 +289,8 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 						   struct Constant_Vector_Funcs p = {
 							   driving_func,
 							   element->element.L3.shape_func[n],
-							   &element->element.L3.iso_conversion
+							   &element->element.L3.iso_conversion,
+							   &element->element.L3.jacobian
 						   };
 
 						   constant_vector.function = &constant_vector_composition;
@@ -275,7 +300,7 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 						   // Perform Gauss quadrature and add to the n-th entry
 						   // Make the workspace first
 						   gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-								   1,
+								   4,
 								   -1,
 								   1,
 								   0, // Ignored
@@ -320,7 +345,7 @@ gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, 
 								 // Perform Gauss quadrature and add to the n-th entry
 								 // Make the workspace first
 								 gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-										 1,
+										 2,
 										 -1,
 										 1,
 										 0, // Ignored
@@ -360,7 +385,7 @@ gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, 
 								 // Perform Gauss quadrature and add to the n-th entry
 								 // Make the workspace first
 								 gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-										 1,
+										 3,
 										 -1,
 										 1,
 										 0, // Ignored

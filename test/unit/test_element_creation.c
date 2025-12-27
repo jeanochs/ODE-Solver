@@ -8,7 +8,8 @@
 
 START_TEST(L2_element_creation) {
 	// Create the linear element
-	struct Element_Linear ele = create_element_L2(1, 3);
+	struct Element_Linear ele;
+	create_element_L2(&ele, 1, 3);
 
 	// Calculate the shape functions and their derivatives
 	double N0 = ele.element.L2.shape_func[0](-0.3);
@@ -30,12 +31,15 @@ START_TEST(L2_element_creation) {
 	ck_assert_double_eq_tol(J, 1.0f, TOL);
 	ck_assert_double_eq_tol(phy_x, 2.1, TOL);
 
+	free_element_memory(&ele);
+
 } 
 END_TEST
 
 START_TEST(L3_element_creation) {
 	// Create the linear element
-	struct Element_Linear ele = create_element_L3(0, 1.3, 3);
+	struct Element_Linear ele;
+	create_element_L3(&ele, 0, 1.3, 3);
 
 	// Calculate the shape functions and their derivatives
 	double N0 = ele.element.L3.shape_func[0](-0.1);
@@ -59,6 +63,8 @@ START_TEST(L3_element_creation) {
 	ck_assert_double_eq_tol(N2_D, 1.1, TOL);
 	ck_assert_double_eq_tol(J, 1.56, TOL);
 	ck_assert_double_eq_tol(phy_x, 1.608, TOL);
+
+	free_element_memory(&ele);
 
 } 
 END_TEST

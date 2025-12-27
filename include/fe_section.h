@@ -75,8 +75,9 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 // Creation Functions
 gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driving_func) (double));
 gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, double b);
-struct Element_Linear create_element_L2(double node1, double node2);
-struct Element_Linear create_element_L3(double node1, double node2, double node3);
+void create_element_L2(struct Element_Linear* e, double node1, double node2);
+void create_element_L3(struct Element_Linear* e, double node1, double node2, double node3);
+void free_element_memory(struct Element_Linear* ele);
 void free_mesh_memory(struct Mesh* input_mesh);
 
 // Composition functions
@@ -85,6 +86,7 @@ struct Constant_Vector_Funcs {
 	double (*nonhomo) (double);
 	double (*shape) (double);
 	gsl_function* converter;
+	gsl_function* jacobian;
 
 };
 

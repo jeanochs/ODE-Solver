@@ -15,8 +15,9 @@ double constant_vector_composition(double zeta, void* func_params) {
 
 	// Since the function is given in terms of x, teh conversion from zeta to the crresponding x-value is done by the below equation.
 	double x_value = GSL_FN_EVAL(p->converter, zeta);
+	double jacobian = GSL_FN_EVAL(p->jacobian, zeta);
 
-	return f(x_value)*shape(zeta);
+	return f(x_value)*shape(zeta)*jacobian;
 
 }
 

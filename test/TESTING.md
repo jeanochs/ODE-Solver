@@ -2,54 +2,6 @@
 
 ## Unit Tests
 
-### Checking Parser Functions
-
-Unit Tests: 5
-
-Main Functions/Subroutines Tested:
-`parse_input_file`
-
-1. `linear_mesh_1,in`: Passing Test
-
-Check:
-    Node Count = 4
-    Element Count = 3
-    Calculations:
-        For Element 1 (Index 0):
-            Node IDs 1 and 2 (Indices 0 and 1)
-            $ N_0(0) = \frac{1}{2} $ and $ N_1(0) = \frac{1}{2} $
-            $ N_0'(0) = -\frac{1}{2} $ and $ N_1'(0) = \frac{1}{2} $
-            $ J(0) = \frac{1 - 0}{2} = \frac{1}{2} $
-        For Element 3 (index 2):
-            Node IDs 3 and 4 (Indices 2 and 3)
-            $ N_0(0) = \frac{1}{2} $ and $ N_1(0) = \frac{1}{2} $
-            $ N_0'(0) = -\frac{1}{2} $ and $ N_1'(0) = \frac{1}{2} $
-            $ J(0) = \frac{3 - 2}{2} = \frac{1}{2} $
-
-2. `linear_mesh_2.in` : Failing Test
-
-Check:
-    Should error out; node count doesn't match.
-    Return error code 1.
-
-3. `linear_mesh_3.in` : Failing Test
-
-Check:
-    Should error out; nodes 3 and 4 (indices 2 and 3) are out of order.
-    Return error code 1.
-
-4. `linear_mesh_4.in` : Failing Test
-
-Check:
-    Should error out; should report that only the node count is given, and no node coordinates.
-    Return error code 1.
-
-5. `linear_mesh_5.in` : Failing Test
-
-Check:
-    Should error out; should report that file is empty.
-    Return error code 1.
-
 ### Checking Solver Setup Functions
 
 Main Functions/Subroutines Tested:
@@ -84,7 +36,7 @@ Main Functions/Subroutines Tested:
         $ x(0.2) = 1.608 $
    
 2. Calculation Routines 
-    Driving Function Used: $ f(x) = x^2 + 2x - 1 $
+    Driving Function Used: $ f(x) = x^2 + x + 3 $
     ODE Coefficients Used: $ a = 4, b = 4 $
     1. L2 Element: Nodes 1 and 2: x = 1, 3
         **Composition Functions**
@@ -136,6 +88,54 @@ Main Functions/Subroutines Tested:
             8.2794 \\
             \end{bmatrix} $$
 
+
+### Checking Parser Functions
+
+Unit Tests: 5
+
+Main Functions/Subroutines Tested:
+`parse_input_file`
+
+1. `linear_mesh_1,in`: Passing Test
+
+Check:
+    Node Count = 4
+    Element Count = 3
+    Calculations:
+        For Element 1 (Index 0):
+            Node IDs 1 and 2 (Indices 0 and 1)
+            $ N_0(0) = \frac{1}{2} $ and $ N_1(0) = \frac{1}{2} $
+            $ N_0'(0) = -\frac{1}{2} $ and $ N_1'(0) = \frac{1}{2} $
+            $ J(0) = \frac{1 - 0}{2} = \frac{1}{2} $
+        For Element 3 (index 2):
+            Node IDs 3 and 4 (Indices 2 and 3)
+            $ N_0(0) = \frac{1}{2} $ and $ N_1(0) = \frac{1}{2} $
+            $ N_0'(0) = -\frac{1}{2} $ and $ N_1'(0) = \frac{1}{2} $
+            $ J(0) = \frac{3 - 2}{2} = \frac{1}{2} $
+
+2. `linear_mesh_2.in` : Failing Test
+
+Check:
+    Should error out; node count doesn't match.
+    Return error code 1.
+
+3. `linear_mesh_3.in` : Failing Test
+
+Check:
+    Should error out; nodes 3 and 4 (indices 2 and 3) are out of order.
+    Return error code 1.
+
+4. `linear_mesh_4.in` : Failing Test
+
+Check:
+    Should error out; should report that only the node count is given, and no node coordinates.
+    Return error code 1.
+
+5. `linear_mesh_5.in` : Failing Test
+
+Check:
+    Should error out; should report that file is empty.
+    Return error code 1.
 
 
     

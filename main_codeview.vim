@@ -158,16 +158,16 @@ endif
 badd +10 include/fe_section.h
 badd +286 src/fe_section.c
 badd +27 src/main.c
-badd +51 src/shape_functions.c
+badd +98 src/shape_functions.c
 badd +1 tests/unit/test_parser.c
-badd +15 test/unit/test_parser.c
-badd +21 test/TESTING.md
-badd +31 test/Makefile
+badd +190 test/unit/test_parser.c
+badd +134 test/TESTING.md
+badd +17 test/Makefile
 badd +1 main.c
 badd +15 Makefile
 badd +1 composition_functions.c
-badd +12 test/unit/test_solver_comp.c
-badd +5 src/composition_functions.c
+badd +39 test/unit/test_solver_comp.c
+badd +1 src/composition_functions.c
 badd +0 test/unit/test_element_creation.c
 argglobal
 %argdel
@@ -201,11 +201,11 @@ set winminheight=0
 set winheight=1
 set winminwidth=0
 set winwidth=1
-exe '1resize ' . ((&lines * 21 + 23) / 46)
+exe '1resize ' . ((&lines * 32 + 23) / 46)
 exe 'vert 1resize ' . ((&columns * 65 + 98) / 196)
-exe '2resize ' . ((&lines * 21 + 23) / 46)
+exe '2resize ' . ((&lines * 32 + 23) / 46)
 exe 'vert 2resize ' . ((&columns * 65 + 98) / 196)
-exe '3resize ' . ((&lines * 21 + 23) / 46)
+exe '3resize ' . ((&lines * 10 + 23) / 46)
 exe 'vert 3resize ' . ((&columns * 131 + 98) / 196)
 exe 'vert 4resize ' . ((&columns * 64 + 98) / 196)
 argglobal
@@ -342,11 +342,11 @@ setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 1 - ((0 * winheight(0) + 10) / 21)
+let s:l = 36 - ((0 * winheight(0) + 16) / 32)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
+keepjumps 36
 normal! 0
 wincmd w
 argglobal
@@ -484,12 +484,12 @@ setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 1 - ((0 * winheight(0) + 10) / 21)
+let s:l = 36 - ((29 * winheight(0) + 16) / 32)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 1
-normal! 0
+keepjumps 36
+normal! 016|
 wincmd w
 argglobal
 if bufexists(fnamemodify("include/fe_section.h", ":p")) | buffer include/fe_section.h | else | edit include/fe_section.h | endif
@@ -626,20 +626,16 @@ setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 6 - ((0 * winheight(0) + 10) / 21)
+let s:l = 72 - ((0 * winheight(0) + 5) / 10)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 6
-normal! 09|
+keepjumps 72
+normal! 0
 wincmd w
 argglobal
-if bufexists(fnamemodify("test/TESTING.md", ":p")) | buffer test/TESTING.md | else | edit test/TESTING.md | endif
-balt test/Makefile
-xnoremap <buffer> <silent> [[ :exe "normal! gv"|call search('\%(^#\{1,5\}\s\+\S\|^\S.*\n^[=-]\+$\)', "bsW")
-nnoremap <buffer> <silent> [[ :call search('\%(^#\{1,5\}\s\+\S\|^\S.*\n^[=-]\+$\)', "bsW")
-xnoremap <buffer> <silent> ]] :exe "normal! gv"|call search('\%(^#\{1,5\}\s\+\S\|^\S.*\n^[=-]\+$\)', "sW")
-nnoremap <buffer> <silent> ]] :call search('\%(^#\{1,5\}\s\+\S\|^\S.*\n^[=-]\+$\)', "sW")
+if bufexists(fnamemodify("test/Makefile", ":p")) | buffer test/Makefile | else | edit test/Makefile | endif
+balt test/TESTING.md
 setlocal keymap=
 setlocal noarabic
 setlocal noautoindent
@@ -657,12 +653,12 @@ setlocal cinoptions=
 setlocal cinscopedecls=public,protected,private
 setlocal cinwords=if,else,while,do,for,switch
 setlocal colorcolumn=
-setlocal comments=fb:*,fb:-,fb:+,n:>
-setlocal commentstring=<!--%s-->
+setlocal comments=sO:#\ -,mO:#\ \ ,b:#
+setlocal commentstring=#\ %s
 setlocal complete=.,w,b,u,t,i
 setlocal completefunc=
 setlocal concealcursor=inc
-setlocal conceallevel=0
+setlocal conceallevel=2
 setlocal nocopyindent
 setlocal cryptmethod=
 setlocal nocursorbind
@@ -674,9 +670,9 @@ setlocal dictionary=
 setlocal nodiff
 setlocal equalprg=
 setlocal errorformat=
-setlocal expandtab
-if &filetype != 'markdown'
-setlocal filetype=markdown
+setlocal noexpandtab
+if &filetype != 'make'
+setlocal filetype=make
 endif
 setlocal fillchars=
 setlocal fixendofline
@@ -691,16 +687,16 @@ setlocal foldminlines=1
 setlocal foldnestmax=20
 setlocal foldtext=foldtext()
 setlocal formatexpr=
-setlocal formatlistpat=^\\s*\\d\\+\\.\\s\\+\\|^\\s*[-*+]\\s\\+\\|^\\[^\\ze[^\\]]\\+\\]:\\&^.\\{4\\}
-setlocal formatoptions=tcqln
+setlocal formatlistpat=^\\s*\\d\\+[\\]:.)}\\t\ ]\\s*
+setlocal formatoptions=croql
 setlocal formatprg=
 setlocal grepprg=
 setlocal iminsert=0
 setlocal imsearch=-1
-setlocal include=
+setlocal include=^\\s*include
 setlocal includeexpr=
-setlocal indentexpr=
-setlocal indentkeys=0{,0},0),0],:,0#,!^F,o,O,e
+setlocal indentexpr=GetMakeIndent()
+setlocal indentkeys=!^F,o,O,<:>,=else,=endif
 setlocal noinfercase
 setlocal iskeyword=@,48-57,_,192-255
 setlocal keywordprg=
@@ -712,14 +708,14 @@ setlocal nolist
 setlocal listchars=
 setlocal makeencoding=
 setlocal makeprg=
-setlocal matchpairs=(:),{:},[:],<:>
+setlocal matchpairs=(:),{:},[:]
 setlocal modeline
 setlocal modifiable
 setlocal nrformats=bin,octal,hex
 set number
 setlocal number
 setlocal numberwidth=4
-setlocal omnifunc=htmlcomplete#CompleteTags
+setlocal omnifunc=
 setlocal path=
 setlocal nopreserveindent
 setlocal nopreviewwindow
@@ -730,14 +726,14 @@ setlocal norightleft
 setlocal rightleftcmd=search
 setlocal noscrollbind
 setlocal scrolloff=-1
-setlocal shiftwidth=4
+setlocal shiftwidth=0
 setlocal noshortname
 setlocal showbreak=
 setlocal sidescrolloff=-1
 setlocal signcolumn=auto
 setlocal nosmartindent
 setlocal nosmoothscroll
-setlocal softtabstop=4
+setlocal softtabstop=0
 setlocal nospell
 setlocal spellcapcheck=[.?!]\\_[\\])'\"\	\ ]\\+
 setlocal spellfile=
@@ -747,8 +743,8 @@ setlocal statusline=
 setlocal suffixesadd=
 setlocal swapfile
 setlocal synmaxcol=3000
-if &syntax != 'markdown'
-setlocal syntax=markdown
+if &syntax != 'make'
+setlocal syntax=make
 endif
 setlocal tabstop=4
 setlocal tagcase=
@@ -772,19 +768,18 @@ setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 85 - ((41 * winheight(0) + 21) / 43)
+let s:l = 41 - ((38 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 85
-normal! 03|
+keepjumps 41
+normal! 023|
 wincmd w
-4wincmd w
-exe '1resize ' . ((&lines * 21 + 23) / 46)
+exe '1resize ' . ((&lines * 32 + 23) / 46)
 exe 'vert 1resize ' . ((&columns * 65 + 98) / 196)
-exe '2resize ' . ((&lines * 21 + 23) / 46)
+exe '2resize ' . ((&lines * 32 + 23) / 46)
 exe 'vert 2resize ' . ((&columns * 65 + 98) / 196)
-exe '3resize ' . ((&lines * 21 + 23) / 46)
+exe '3resize ' . ((&lines * 10 + 23) / 46)
 exe 'vert 3resize ' . ((&columns * 131 + 98) / 196)
 exe 'vert 4resize ' . ((&columns * 64 + 98) / 196)
 tabnext
@@ -957,14 +952,10 @@ normal! zo
 normal! zo
 41
 normal! zo
-14
-normal! zc
 54
 normal! zo
 81
 normal! zo
-54
-normal! zc
 97
 normal! zo
 102
@@ -991,84 +982,102 @@ normal! zo
 normal! zo
 161
 normal! zo
-180
+181
 normal! zo
-187
+188
 normal! zo
-192
-normal! zo
-97
-normal! zc
-216
-normal! zo
-218
-normal! zo
-219
-normal! zo
-219
-normal! zo
-219
+193
 normal! zo
 220
 normal! zo
+222
+normal! zo
 223
 normal! zo
-226
+223
 normal! zo
-238
+223
 normal! zo
-238
+224
 normal! zo
-216
-normal! zc
-294
+227
 normal! zo
-295
+230
 normal! zo
-296
+242
 normal! zo
-296
+242
 normal! zo
-296
+259
 normal! zo
-296
+259
+normal! zo
+259
+normal! zo
+263
+normal! zo
+266
+normal! zo
+278
+normal! zo
+278
 normal! zo
 299
 normal! zo
 300
 normal! zo
-303
+301
 normal! zo
-318
+301
 normal! zo
-318
+301
 normal! zo
-336
+301
 normal! zo
-336
+304
 normal! zo
-336
+305
 normal! zo
-336
+308
 normal! zo
-339
+323
 normal! zo
-340
+323
 normal! zo
-343
+341
 normal! zo
-358
+341
 normal! zo
-358
+341
 normal! zo
-294
-normal! zc
-let s:l = 10 - ((9 * winheight(0) + 21) / 43)
+341
+normal! zo
+344
+normal! zo
+345
+normal! zo
+348
+normal! zo
+363
+normal! zo
+363
+normal! zo
+385
+normal! zo
+402
+normal! zo
+411
+normal! zo
+412
+normal! zo
+416
+normal! zo
+let s:l = 169 - ((15 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 10
-normal! 0
+keepjumps 169
+normal! 059|
 wincmd w
 argglobal
 if bufexists(fnamemodify("src/fe_section.c", ":p")) | buffer src/fe_section.c | else | edit src/fe_section.c | endif
@@ -1230,26 +1239,26 @@ normal! zo
 normal! zo
 161
 normal! zo
-180
+181
 normal! zo
-187
+188
 normal! zo
-192
+193
 normal! zo
 97
 normal! zc
-216
+220
 normal! zo
-218
+222
 normal! zo
-216
+220
 normal! zc
-let s:l = 53 - ((52 * winheight(0) + 21) / 43)
+let s:l = 383 - ((376 * winheight(0) + 21) / 43)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 53
-normal! 022|
+keepjumps 383
+normal! 0
 wincmd w
 argglobal
 if bufexists(fnamemodify("include/fe_section.h", ":p")) | buffer include/fe_section.h | else | edit include/fe_section.h | endif
@@ -1386,16 +1395,16 @@ setlocal wrap
 setlocal wrapmargin=0
 silent! normal! zE
 let &fdl = &fdl
-let s:l = 79 - ((13 * winheight(0) + 10) / 21)
+let s:l = 98 - ((12 * winheight(0) + 10) / 21)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 79
+keepjumps 98
 normal! 0
 wincmd w
 argglobal
-if bufexists(fnamemodify("src/shape_functions.c", ":p")) | buffer src/shape_functions.c | else | edit src/shape_functions.c | endif
-balt src/composition_functions.c
+if bufexists(fnamemodify("src/composition_functions.c", ":p")) | buffer src/composition_functions.c | else | edit src/composition_functions.c | endif
+balt src/shape_functions.c
 setlocal keymap=
 setlocal noarabic
 setlocal noautoindent
@@ -1442,7 +1451,7 @@ setlocal foldexpr=0
 setlocal foldignore=#
 setlocal foldlevel=0
 setlocal foldmarker={{{,}}}
-setlocal foldmethod=manual
+setlocal foldmethod=indent
 setlocal foldminlines=1
 setlocal foldnestmax=20
 setlocal foldtext=foldtext()
@@ -1526,14 +1535,16 @@ setlocal nowinfixheight
 setlocal nowinfixwidth
 setlocal wrap
 setlocal wrapmargin=0
-silent! normal! zE
-let &fdl = &fdl
-let s:l = 72 - ((3 * winheight(0) + 10) / 21)
+12
+normal! zo
+24
+normal! zo
+let s:l = 28 - ((10 * winheight(0) + 10) / 21)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 72
-normal! 0
+keepjumps 28
+normal! 079|
 wincmd w
 exe 'vert 1resize ' . ((&columns * 65 + 98) / 196)
 exe 'vert 2resize ' . ((&columns * 64 + 98) / 196)
