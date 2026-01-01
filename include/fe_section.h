@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <assert.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_vector.h>
@@ -63,6 +64,9 @@ struct Mesh {
 
 struct ODE_Solution {
 	gsl_vector* solution_coeff;
+	// These fields can be NULL; it is an optional output
+	gsl_matrix* coeff_matrix_global;
+	gsl_vector* const_vector_global;
 
 };
 
@@ -70,7 +74,7 @@ struct ODE_Solution {
 
 // Main Functions
 int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Type mesh_kind);
-int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double (*func) (double));
+int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, double (*func) (double), bool output_global_arrays);
 
 // Creation Functions
 gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driving_func) (double));
@@ -79,6 +83,7 @@ void create_element_L2(struct Element_Linear* e, double node1, double node2);
 void create_element_L3(struct Element_Linear* e, double node1, double node2, double node3);
 void free_element_memory(struct Element_Linear* ele);
 void free_mesh_memory(struct Mesh* input_mesh);
+void free_solution_memory(struct ODE_Solution* solution);
 
 // Composition functions
 

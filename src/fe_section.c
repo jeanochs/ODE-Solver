@@ -30,6 +30,19 @@ void free_mesh_memory(struct Mesh* input_mesh) {
 
 }
 
+void free_solution_memory(struct ODE_Solution* solution) {
+	gsl_vector_free(solution->solution_coeff);
+
+	if (solution->coeff_matrix_global != NULL) {
+		gsl_matrix_free(solution->coeff_matrix_global);
+	}
+
+	if (solution->const_vector_global != NULL) {
+		gsl_vector_free(solution->const_vector_global);
+	}
+
+}
+
 void create_element_L2(struct Element_Linear* e, double node1, double node2) {
 	// Create element object
 	e->kind = LINEAR;
@@ -141,6 +154,13 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 	double prev_node_coord; // Nodes must be organized in ascending sequential order. 
 	while (fgets(buffer, 100, input_stream) != NULL) {
 		double coord = strtof(buffer, NULL);
+		// Checks if there are more nodes than what was indicated.
+		if (counter == num_nodes) {
+			printf("CRITICAL ERROR: Mesh file is malformed; there are more than %d nodes in the mesh file. Please check.\n", num_nodes);
+			free(node_coors);
+			return 1;
+		}
+
 		node_coors[counter++] = coord;
 
 		// Don't compare the first node coordiante to anything; simply set it as the first previoud node coordinate.
@@ -156,8 +176,11 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 			prev_node_coord = coord;
 		}
 
+
+
 	}
 
+	// Checks if there were less nodes than indicated by the file.
 	if (counter != num_nodes) {
 		printf("CRITICAL ERROR: Mesh file is malformed; number of nodes reported (%d) is not equal to the number of nodes scanned (%d).\n", num_nodes, counter);
 		free(node_coors);
@@ -180,22 +203,24 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 
 			for (int i = 1; i < num_nodes; i++) {
 				struct Element_Linear ele;
-				create_element_L2(&ele, node_coors[i - 1], node_coors[i]);
-
 				// Add the ready element to the element array
-				element_array[i - 1] = ele;
+				int index = i - 1;
+				element_array[index] = ele;
+				
+				create_element_L2(&element_array[index], node_coors[i - 1], node_coors[i]);
 
 				// Populate the connectivity grid.
 				struct Element_Conn conn_entry;
 				conn_entry.kind = LINEAR;
 				conn_entry.node_list.L2.node_id[0] = i - 1;
 				conn_entry.node_list.L2.node_id[1] = i;
-				conn_array[i - 1] = conn_entry;
+				conn_array[index] = conn_entry;
 			}
 
 			// Finally, add the completed element array to the mesh object
 			mesh_object->elements = element_array;
 			mesh_object->connectivity_grid = conn_array;
+			free(node_coors);
 			break;
 		}
 
@@ -211,13 +236,13 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 				return 1;
 			}
 
-			for (int i = 2; i < num_nodes; i++) {
+			for (int i = 2; i < num_nodes; i += 2) {
 				struct Element_Linear ele;
-				create_element_L3(&ele, node_coors[i - 2], node_coors[i - 1],  node_coors[i]);
-
-
 				// Add the ready element to the element array
-				element_array[i - 1] = ele;
+				int index = (i - 1)/2;
+				element_array[index] = ele;
+
+				create_element_L3(&element_array[index], node_coors[i - 2], node_coors[i - 1],  node_coors[i]);
 				
 				// Populate the connectivity grid.
 				struct Element_Conn conn_entry;
@@ -225,12 +250,13 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 				conn_entry.node_list.L3.node_id[0] = i - 2;
 				conn_entry.node_list.L3.node_id[1] = i - 1;
 				conn_entry.node_list.L3.node_id[2] = i;
-				conn_array[i - 1] = conn_entry;
+				conn_array[index] = conn_entry;
 			}
 
 			// Finally, add the completed element array to the mesh object
 			mesh_object->elements = element_array;
 			mesh_object->connectivity_grid = conn_array;
+			free(node_coors);
 			break;
 		}
 	}
@@ -300,7 +326,7 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 						   // Perform Gauss quadrature and add to the n-th entry
 						   // Make the workspace first
 						   gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-								   4,
+								   10,
 								   -1,
 								   1,
 								   0, // Ignored
@@ -345,7 +371,7 @@ gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, 
 								 // Perform Gauss quadrature and add to the n-th entry
 								 // Make the workspace first
 								 gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-										 2,
+										 9,
 										 -1,
 										 1,
 										 0, // Ignored
@@ -385,7 +411,7 @@ gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, 
 								 // Perform Gauss quadrature and add to the n-th entry
 								 // Make the workspace first
 								 gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-										 3,
+										 10,
 										 -1,
 										 1,
 										 0, // Ignored
@@ -406,7 +432,7 @@ gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, 
 
 }
 
-int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double (*func) (double)) {
+int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, double (*func) (double), bool output_global_arrays) {
 	// First, check if the input mesh has valid node and element arrays
 	if (input_mesh->connectivity_grid == NULL || input_mesh->elements == NULL) {
 		printf("ERROR: Provided mesh is not properly loaded with element and node information.\nPlease ensure that the `parse_input_file` function has been called to populate the object, or check for other errors.\n");
@@ -416,11 +442,8 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 	// Initialize the constant vector and coefficient matrix with zeros
 	// Coeffcient matrix size : (num_nodes, num_nodes)
 	// Constant vector size : (num_nodes, 1)
-	gsl_matrix* K_coeff = gsl_matrix_alloc(input_mesh->num_nodes, input_mesh->num_nodes);
-	gsl_vector* F_const = gsl_vector_alloc(input_mesh->num_nodes);
-
-	gsl_vector_set_zero(F_const);
-	gsl_matrix_set_zero(K_coeff);
+	gsl_matrix* K_coeff = gsl_matrix_calloc(input_mesh->num_nodes, input_mesh->num_nodes);
+	gsl_vector* F_const = gsl_vector_calloc(input_mesh->num_nodes);
 
 	// Now, iterate through the elements and solve for the local coefficient matrix and constant vectors 
 	for (int e = 0; e < input_mesh->num_elements; e++) {
@@ -438,7 +461,7 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 				size = 2;
 				break;
 			case QUAD: 
-				starting_point = input_mesh->connectivity_grid[e].node_list.L2.node_id[0];
+				starting_point = input_mesh->connectivity_grid[e].node_list.L3.node_id[0];
 				size = 3;
 				break;
 		}
@@ -450,9 +473,44 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 		gsl_matrix_add(&submatrix.matrix, coefficient_local);
 		gsl_vector_add(&subvector.vector, constant_local);
 
+		// Free up the element-wise arrays
+		gsl_matrix_free(coefficient_local);
+		gsl_vector_free(constant_local);
+
 	}
 
-	// With populated matrix and vector, solve the linear equation [K][y] = [F]
+
+	// Option of whether to output the global matrix and vector
+	// Placed here *before* teh K_coeff matrix is edited in-place by the LU decomposition function
+	if (output_global_arrays) {
+		// Copy the arrays first
+		gsl_matrix* K_coeff_copy = gsl_matrix_calloc(input_mesh->num_nodes, input_mesh->num_nodes);
+		gsl_vector* F_const_copy = gsl_vector_calloc(input_mesh->num_nodes);
+
+		gsl_vector_memcpy(F_const_copy, F_const);
+		gsl_matrix_memcpy(K_coeff_copy, K_coeff);
+
+		solution->coeff_matrix_global = K_coeff_copy;
+		solution->const_vector_global = F_const_copy;
+	}
+
+	// Now, prepare the arrays for solving.
+	// Set up the boundary conditions
+	// Constant Vector
+	gsl_vector_set(F_const, 0, d1);
+	gsl_vector_set(F_const, input_mesh->num_nodes - 1, d2);
+
+	// Coefficient Matrix
+	gsl_vector_view first_row = gsl_matrix_row(K_coeff, 0);
+	gsl_vector_view last_row = gsl_matrix_row(K_coeff, input_mesh->num_nodes - 1);
+	gsl_vector_set_zero(&first_row.vector);
+	gsl_vector_set_zero(&last_row.vector);
+
+	gsl_matrix_set(K_coeff, 0, 0, 1);
+	gsl_matrix_set(K_coeff, input_mesh->num_nodes - 1, input_mesh->num_nodes - 1, 1);
+
+
+	// With prepared matrix and vector, solve the linear equation [K][y] = [F]
 	// Uisng the LU decomp solver
 	gsl_permutation* perm = gsl_permutation_alloc(input_mesh->num_nodes);
 	gsl_permutation_init(perm);
@@ -467,6 +525,15 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 
 	// Pass the now solved variable vector to the Solution output.
 	solution->solution_coeff = variable_vector;
+
+	gsl_permutation_free(perm);
+	gsl_matrix_free(K_coeff);
+	gsl_vector_free(F_const);
+
+	if (!output_global_arrays) {
+		solution->coeff_matrix_global = NULL;
+		solution->const_vector_global = NULL;
+	}
 
 	// Done.
 	

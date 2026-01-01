@@ -1,6 +1,9 @@
 *.out
 *.o
 *.sw*
+.ipynb_checkpoints
+.virtual_documents
+venv_main
 
 # Ignore the mesh used for studies
 mesh.in
