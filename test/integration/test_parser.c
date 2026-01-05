@@ -221,7 +221,7 @@ START_TEST(quadratic_test_parser_1) {
 	ck_assert_uint_eq(m.num_elements, 4);
 
 	// Element 1 (index 0)
-	// First, check if the kind is linear
+	// First, check if the kind is quadratic
 	ck_assert_int_eq(m.elements[0].kind, QUAD);
 
 	int n_id1 = m.connectivity_grid[0].node_list.L3.node_id[0];
@@ -257,7 +257,7 @@ START_TEST(quadratic_test_parser_1) {
 	ck_assert_double_eq_tol(x_phys, 1.75, TOL);
 
 	// Element 3 (index 2)
-	// First, check if the kind is linear
+	// First, check if the kind is quadratic
 	ck_assert_int_eq(m.elements[2].kind, QUAD);
 
 	n_id1 = m.connectivity_grid[2].node_list.L3.node_id[0];
@@ -292,7 +292,7 @@ START_TEST(quadratic_test_parser_1) {
 	ck_assert_double_eq_tol(J, 0.542, TOL);
 	ck_assert_double_eq_tol(x_phys, 6.847, TOL);
 
-	// Parser should pass a code of sucess
+	// Parser should pass a code of success
 	ck_assert_int_eq(status, EXIT_SUCCESS);
 
 	if (!status) free_mesh_memory(&m);

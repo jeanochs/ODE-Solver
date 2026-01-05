@@ -137,7 +137,6 @@ START_TEST(L2_solver) {
 	free_mesh_memory(&m);
 	free_solution_memory(&sol);
 
-
 }
 END_TEST
 

@@ -4,9 +4,14 @@
 .ipynb_checkpoints
 .virtual_documents
 venv_main
+*.aux
+*.log
 
 # Ignore the mesh used for studies
 mesh.in
 
 # Ignore the main program (for now)
 main.c
+
+# Ignore the preview HTML file
+TESTING.html
