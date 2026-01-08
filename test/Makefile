@@ -7,7 +7,7 @@ SUBMODULES = ../src/shape_functions.c \
 MODULES_BASE = $(notdir $(MODULES))
 
 LIBS = -lgsl -lcheck -lsubunit -lrt -lm -pthread
-DEBUG_FLAGS = -fsanitize=address \
+DEBUG_FLAGS = -fsanitize=address,undefined \
 			  -fsanitize=leak \
 			  -g -O0
 

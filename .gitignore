@@ -6,6 +6,7 @@
 venv_main
 *.aux
 *.log
+build/
 
 # Ignore the mesh used for studies
 mesh.in
@@ -15,3 +16,8 @@ main.c
 
 # Ignore the preview HTML file
 TESTING.html
+
+# Ignore solver output
+input_mesh.in
+results.png
+solution_output.dat

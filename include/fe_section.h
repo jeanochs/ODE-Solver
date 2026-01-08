@@ -23,7 +23,7 @@ typedef union {
 		double (*shape_func[2]) (double); // Shape functions
 		double (*shape_derv[2]) (double); // Shape function derivatives
 		gsl_function jacobian;
-		gsl_function iso_conversion; // Function that converts physical coordiantes to isoparametric relationships
+		gsl_function iso_conversion; // Function that converts physical coordinates to isoparametric relationships
 	} L2;
 
 	// Used with the QUAD (quadratic) tag
@@ -32,7 +32,7 @@ typedef union {
 		double (*shape_func[3]) (double); // Shape functions
 		double (*shape_derv[3]) (double); // Shape function derivatives
 		gsl_function jacobian;
-		gsl_function iso_conversion; // Function that converts physical coordiantes to isoparametric relationships
+		gsl_function iso_conversion; // Function that converts physical coordinates to isoparametric relationships
 	} L3;
 
 } Element_2D;
@@ -57,6 +57,7 @@ struct Element_Conn {
 struct Mesh {
 	struct Element_Conn* connectivity_grid;
 	struct Element_Linear* elements;
+	double *node_coordinates;
 	uint16_t num_nodes;
 	uint16_t num_elements;
 
@@ -74,7 +75,8 @@ struct ODE_Solution {
 
 // Main Functions
 int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Type mesh_kind);
-int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, double (*func) (double), bool output_global_arrays);
+int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, double (*driving_func) (double), bool output_global_arrays);
+int output_solution_data(struct Mesh* input_mesh, struct ODE_Solution* input_solution);
 
 // Creation Functions
 gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driving_func) (double));

@@ -47,6 +47,8 @@ START_TEST(linear_test_parser_1) {
 	double N_1 = m.elements[0].element.L2.shape_func[1](0);
 	double N_0_D = m.elements[0].element.L2.shape_derv[0](0);
 	double N_1_D = m.elements[0].element.L2.shape_derv[1](0);
+	double J = GSL_FN_EVAL(&m.elements[0].element.L2.jacobian, 0);
+	double x_phys = GSL_FN_EVAL(&m.elements[0].element.L2.iso_conversion, 0);
 
 	ck_assert_int_eq(n_id1, 0);
 	ck_assert_int_eq(n_id2, 1);
@@ -56,6 +58,8 @@ START_TEST(linear_test_parser_1) {
 	ck_assert_double_eq_tol(N_1, 0.5, TOL);
 	ck_assert_double_eq_tol(N_0_D, -0.5, TOL);
 	ck_assert_double_eq_tol(N_1_D, 0.5, TOL);
+	ck_assert_double_eq_tol(J, 0.5, TOL);
+	ck_assert_double_eq_tol(x_phys, 0.5, TOL);
 
 	// Element 3 (index 2)
 	// First, check if the kind is linear
@@ -71,6 +75,8 @@ START_TEST(linear_test_parser_1) {
 	N_1 = m.elements[2].element.L2.shape_func[1](0.0);
 	N_0_D = m.elements[2].element.L2.shape_derv[0](0.0);
 	N_1_D = m.elements[2].element.L2.shape_derv[1](0.0);
+	J = GSL_FN_EVAL(&m.elements[2].element.L2.jacobian, 0);
+	x_phys = GSL_FN_EVAL(&m.elements[2].element.L2.iso_conversion, 0);
 
 	ck_assert_int_eq(n_id1, 2);
 	ck_assert_int_eq(n_id2, 3);
@@ -80,6 +86,8 @@ START_TEST(linear_test_parser_1) {
 	ck_assert_double_eq_tol(N_1, 0.5, TOL);
 	ck_assert_double_eq_tol(N_0_D, -0.5, TOL);
 	ck_assert_double_eq_tol(N_1_D, 0.5, TOL);
+	ck_assert_double_eq_tol(J, 0.5, TOL);
+	ck_assert_double_eq_tol(x_phys, 2.5, TOL);
 
 	// Parser should pass a code of sucess
 	ck_assert_int_eq(status, EXIT_SUCCESS);
@@ -466,7 +474,7 @@ int main() {
 	srunner_add_suite(sr_parser, s_parser_quad);
 
 	// Run the suites here.
-	srunner_run_all(sr_parser, CK_NORMAL);
+	srunner_run_all(sr_parser, CK_NOFORK);
 
 	number_failed = srunner_ntests_failed(sr_parser);
 

@@ -24,7 +24,8 @@ double constant_vector_composition(double zeta, void* func_params) {
 double coefficient_matrix_composition(double zeta, void* func_params) {
 	struct Coefficient_Matrix_Funcs* p = (struct Coefficient_Matrix_Funcs*) func_params;
 
-	double term1 = p->shape_derv_i(zeta)*p->shape_derv_j(zeta)*(1/GSL_FN_EVAL(p->jacobian, zeta));
+	// The first -1 below has caused me a lot of problems forgetting it. 
+	double term1 = -1*p->shape_derv_i(zeta)*p->shape_derv_j(zeta)*(1/GSL_FN_EVAL(p->jacobian, zeta));
 	double term2 = p->a*p->shape_i(zeta)*p->shape_derv_j(zeta);
 	double term3 = p->b*p->shape_i(zeta)*p->shape_j(zeta)*GSL_FN_EVAL(p->jacobian, zeta);
 

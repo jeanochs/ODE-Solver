@@ -27,6 +27,7 @@ void free_mesh_memory(struct Mesh* input_mesh) {
 	}
 
 	free(input_mesh->elements);
+	free(input_mesh->node_coordinates);
 
 }
 
@@ -203,6 +204,7 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 
 			for (int i = 1; i < num_nodes; i++) {
 				struct Element_Linear ele;
+				// TODO: Maybe add a memset here to avoid unintiazlied problem
 				// Add the ready element to the element array
 				int index = i - 1;
 				element_array[index] = ele;
@@ -220,7 +222,7 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 			// Finally, add the completed element array to the mesh object
 			mesh_object->elements = element_array;
 			mesh_object->connectivity_grid = conn_array;
-			free(node_coors);
+			mesh_object->node_coordinates = node_coors;
 			break;
 		}
 
@@ -256,7 +258,7 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 			// Finally, add the completed element array to the mesh object
 			mesh_object->elements = element_array;
 			mesh_object->connectivity_grid = conn_array;
-			free(node_coors);
+			mesh_object->node_coordinates = node_coors;
 			break;
 		}
 	}
@@ -266,7 +268,7 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 }
 
 gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driving_func) (double)) {
-	// Check element type. This will determine iteration length
+// Check element type. This will determine iteration length
 	switch (element->kind) {
 		case LINEAR: { // Two nodes
 					   // Create the vector
@@ -289,7 +291,7 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 							 // Perform Gauss quadrature and add to the n-th entry
 							 // Make the workspace first
 							 gsl_integration_fixed_workspace* w = gsl_integration_fixed_alloc(gsl_integration_fixed_legendre,
-									 2,
+									 9,
 									 -1,
 									 1,
 									 0, // Ignored
@@ -464,6 +466,10 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 				starting_point = input_mesh->connectivity_grid[e].node_list.L3.node_id[0];
 				size = 3;
 				break;
+			default:
+				printf("Unknown element type; please check.\n");
+				return 1;
+				break;
 		}
 
 		gsl_matrix_view submatrix = gsl_matrix_submatrix(K_coeff, starting_point, starting_point, size, size);
@@ -492,6 +498,10 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 
 		solution->coeff_matrix_global = K_coeff_copy;
 		solution->const_vector_global = F_const_copy;
+	}
+	else {
+		solution->coeff_matrix_global = NULL;
+		solution->const_vector_global = NULL;
 	}
 
 	// Now, prepare the arrays for solving.
@@ -523,20 +533,45 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 	// Solve.
 	gsl_linalg_LU_solve(K_coeff, perm, F_const, variable_vector);
 
-	// Pass the now solved variable vector to the Solution output.
+	// Pass the now solved variable vector pointer to the Solution output.
 	solution->solution_coeff = variable_vector;
 
 	gsl_permutation_free(perm);
 	gsl_matrix_free(K_coeff);
 	gsl_vector_free(F_const);
 
-	if (!output_global_arrays) {
-		solution->coeff_matrix_global = NULL;
-		solution->const_vector_global = NULL;
-	}
 
 	// Done.
 	
+	return 0;
+
+}
+
+int output_solution_data(struct Mesh* input_mesh, struct ODE_Solution* input_solution) {
+	// Check if there are coordinates and solution values
+	if (input_mesh->node_coordinates == NULL || input_solution->solution_coeff == NULL) {
+		printf("Either the mesh or solution structure are not fully initialized.\n");
+		return 1;
+
+	}
+
+	// Open the file and prepare to write to it. 
+	FILE *output_file = fopen("solution_output.dat", "w");
+
+	if (output_file == NULL) {
+		printf("Error in opening the file. Please check.\n");
+		return 1;
+
+	}
+
+	// Print the header first
+	fprintf(output_file, "x\ty\n");
+	for (int i = 0; i < input_mesh->num_nodes; i++) {
+		fprintf(output_file, "%f\t%f\n", input_mesh->node_coordinates[i], gsl_vector_get(input_solution->solution_coeff, i));
+	}
+
+	fclose(output_file);
+
 	return 0;
 
 }

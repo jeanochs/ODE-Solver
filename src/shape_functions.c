@@ -82,10 +82,10 @@ double J_L3(double zeta, void* node_params) {
 }
 
 // Helper Function
-// Data structure used to assemble teh phsucal-to-isoparamtric functions.
-// Since the conversion is just the addtiont of the products of the individual shape functions and nodes, the structure has arrays for iteration.
+// Data structure used to assemble the phsucal-to-isoparametric functions.
+// Since the conversion is just the addition of the products of the individual shape functions and nodes, the structure has arrays for iteration.
 struct Iso_Phy_Funcs {
-	uint8_t num_points; // This is a small type since I don't wxpect an element to have more than 20 points.
+	uint8_t num_points; // This is a small type since I don't expect an element to have more than 20 points.
 	double* x_coords;
 	double (**shape_funcs) (double);
 };
