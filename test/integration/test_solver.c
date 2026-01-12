@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <fcntl.h>
 #include <check.h>
 #include <string.h>
 
@@ -7,11 +6,32 @@
 
 #define TOL 1e-3
 
+struct Function_Field *field = NULL;
+
 // Directory where the input meshes are.
 char input_mesh_dir[250];
 
 double driving_func(double x) {
 	return x*x + x + 3;
+
+}
+
+static void setup_function_field() {
+	// This would normally be handled by a dedicated function, but this hasn't been written yet.
+	// This setup will probably stay, though
+	// Create the Function Field object
+	struct Function_Field *f_field_temp = malloc(sizeof(struct Function_Field));
+
+	create_function_field(f_field_temp, 0, 15, 2001, driving_func);
+
+	field = f_field_temp;
+
+}
+
+static void teardown_function_field() {
+	free_function_field(field);
+	free(field);
+	field = NULL;
 
 }
 
@@ -39,7 +59,7 @@ START_TEST(L2_solver) {
 		exit(1);
 	}
 
-	status = solve_ode_constant(&m, &sol, 4., 4., 0, 5, driving_func, true);
+	status = solve_ode_constant(&m, &sol, 4., 4., 0, 5, field, true);
 	if (status) {
 		printf("Error in solving mesh. Check.\n");
 		exit(1);
@@ -164,7 +184,7 @@ START_TEST(L3_solver) {
 		exit(1);
 	}
 
-	status = solve_ode_constant(&m, &sol, 4., 4., 0, 5, driving_func, true);
+	status = solve_ode_constant(&m, &sol, 4., 4., 0, 5, field, true);
 	if (status) {
 		printf("Error in solving mesh. Check.\n");
 		exit(1);
@@ -274,10 +294,21 @@ Suite* solver_suite() {
 
 	// LInear Mesh Core Test Case
 	tc_linear = tcase_create("Linear Mesh Case");
+	tcase_add_checked_fixture(
+		tc_linear,
+		setup_function_field,
+		teardown_function_field
+	);
+
 	tcase_add_test(tc_linear, L2_solver);
 	suite_add_tcase(s, tc_linear);
 
 	tc_quad = tcase_create("Quadratic Mesh Case");
+	tcase_add_checked_fixture(
+		tc_quad,
+		setup_function_field,
+		teardown_function_field
+	);
 	tcase_add_test(tc_quad, L3_solver);
 	suite_add_tcase(s, tc_quad);
 
@@ -287,7 +318,7 @@ Suite* solver_suite() {
 
 int main() {
 	// Assign directory here
-	const char* dir_name = "./integration/test_reference_array/";
+	const char *dir_name = "./integration/test_reference_array/";
 	strcpy(input_mesh_dir, dir_name);
 
 	int number_failed;

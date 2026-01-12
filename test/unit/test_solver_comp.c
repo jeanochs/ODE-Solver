@@ -6,6 +6,8 @@
 
 #define TOL 1e-3
 
+struct Function_Field *field = NULL;
+
 double driving_func(double x) {
 	return (x*x) + x + 3;
 
@@ -18,22 +20,21 @@ double b = 4.0f;
 // Predefined matrices
 // L2 Element Matrices and Vectors
 double L2_K[2][2] = {
-	{7./6, 17./6},
-	{-7./6, 31./6}
+	{0.166667, 3.83333},
+	{-0.166667, 4.166667}
 };
 
-double L2_F[2] = {23./3, 11.};
+double L2_F[2] = {7.666667, 11};
 
 // L3 Element Matrices and Vectors
 double L3_K[3][3] = {
-	{0.2099, 2.2006, -0.9438},
-	{-3.133, 8.2577, 2.8750},
-	{0.3895, -2.4583, 4.6021}
+	{-1.64986, 4.306034, -1.1895040},
+	{-1.027298, 4.54229129, 4.485007},
+	{0.143829, -0.848326, 3.237830}
 };
 
 double L3_F[3] = {0.4423, 13.7783, 8.2794};
 
-// Answer fields for composition functions
 // Inputs
 double L2_constant_comp_input[2] = {-0.35, 0.2};
 double L2_coefficient_comp_input[2][2] = {
@@ -43,8 +44,8 @@ double L2_coefficient_comp_input[2][2] = {
 // Answers
 double L2_constant_comp[2] = {4.97644, 6.024};
 double L2_coefficient_comp[2][2] = {
-	{25./16, 41./25},
-	{-25./16, 169./100}
+	{1.0625, 2.14},
+	{-1.0625, 1.19}
 };
 
 // Inputs
@@ -57,10 +58,30 @@ double L3_coefficient_comp_input[3][3] = {
 // Answers
 double L3_constant_comp[3] = {1.2436, 11.9016, 7.3036};
 double L3_coefficient_comp[3][3] = {
-	{0.1322, 2.1933, -0.6911},
-	{-1.273, 0.3051, 1.3786},
-	{-0.1667, -6.3022, 0.0956}
+	{-0.360909, 3.731731, -1.211979},
+	{-1.421238, -1.615343, 1.269033},
+	{0.166667, -3.592533, 0.094169}
 };
+
+static void setup_function_field() {
+	// This would normally be handled by a dedicated function, but this hasn't been written yet.
+	// This setup will probably stay, though
+	// Create the Function Field object
+	struct Function_Field *f_field_temp = malloc(sizeof(struct Function_Field));
+
+	create_function_field(f_field_temp, 0, 10, 1001, driving_func);
+
+	field = f_field_temp;
+
+}
+
+static void teardown_function_field() {
+	free_function_field(field);
+	free(field);
+	field = NULL;
+
+}
+
 
 // Tests to ensure proper construction of matrix and vector integrands
 START_TEST(L2_element_comp) {
@@ -71,10 +92,10 @@ START_TEST(L2_element_comp) {
 	// Check the composition function for the constant vector
 	for (int i = 0; i < 2; i++) {
 		struct Constant_Vector_Funcs p = {
-			driving_func,
+			field,
 			ele.element.L2.shape_func[i],
-			&ele.element.L2.iso_conversion,
-			&ele.element.L2.jacobian
+			&ele.element.L2.jacobian,
+			&ele.element.L2.iso_conversion
 		};
 
 		double comp_value = constant_vector_composition(
@@ -121,10 +142,10 @@ START_TEST(L3_element_comp) {
 	// Check the composition function for the constant vector
 	for (int i = 0; i < 3; i++) {
 		struct Constant_Vector_Funcs p = {
-			driving_func,
+			field,
 			ele.element.L3.shape_func[i],
+			&ele.element.L3.jacobian,
 			&ele.element.L3.iso_conversion,
-			&ele.element.L3.jacobian
 
 		};
 
@@ -170,7 +191,7 @@ START_TEST(L2_element_assembly) {
 	struct Element_Linear ele;
 	create_element_L2(&ele, 1, 3);
 
-	gsl_vector* v = output_constant_vector(&ele, driving_func);
+	gsl_vector* v = output_constant_vector(&ele, field);
 	gsl_matrix* m = output_coefficient_matrix(&ele, a, b);
 
 	// Loading the matrices and vectors
@@ -217,7 +238,7 @@ START_TEST(L3_element_assembly) {
 	struct Element_Linear ele;
 	create_element_L3(&ele, 0, 1.3, 3);
 
-	gsl_vector* v = output_constant_vector(&ele, driving_func);
+	gsl_vector* v = output_constant_vector(&ele, field);
 	gsl_matrix* m = output_coefficient_matrix(&ele, a, b);
 
 	// Loading the matrices and vectors
@@ -270,6 +291,12 @@ Suite* composition_suite() {
 	/* Core test case */
 	tc_core = tcase_create("Core");
 
+	tcase_add_checked_fixture(
+		tc_core,
+		setup_function_field,
+		teardown_function_field
+	);
+
 	tcase_add_test(tc_core, L2_element_comp);
 	tcase_add_test(tc_core, L3_element_comp);
 	suite_add_tcase(s, tc_core);
@@ -285,6 +312,12 @@ Suite* local_assembly_suite() {
 
 	/* Core test case */
 	tc_core = tcase_create("Core");
+
+	tcase_add_checked_fixture(
+		tc_core,
+		setup_function_field,
+		teardown_function_field
+	);
 
 	tcase_add_test(tc_core, L2_element_assembly);
 	tcase_add_test(tc_core, L3_element_assembly);

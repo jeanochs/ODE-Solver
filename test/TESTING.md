@@ -15,6 +15,7 @@ $$ \Pi_i^F = \int_{-1}^1 {f(x(\zeta)){\cdot}\phi_i(\zeta){\cdot}J \ d\zeta} $$
 Main Functions/Subroutines Tested:
 
 1. Element Creation Subroutines
+
     1. L2 Element: Nodes 1 and 2: x = 1, 3
 
         **Shape Functions and Derivatives**
@@ -129,6 +130,16 @@ Main Functions/Subroutines Tested:
             13.7783 \\
             8.2794 \\
             \end{bmatrix} $$
+
+### Function Field Checks
+
+Using $ f(x) = 3x^2 - 5x + 3 $ as the generating function, from 0 to 10, by steps 0.1, 101 number of points:
+
+$$ f(2) = 5 $$
+
+$$ f(5.5) = 66.25 $$
+
+$$ f(4.67) \approx 45.0767 $$
 
 ## Integration Tests
 

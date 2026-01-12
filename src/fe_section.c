@@ -267,7 +267,7 @@ int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Ty
 
 }
 
-gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driving_func) (double)) {
+gsl_vector* output_constant_vector(struct Element_Linear* element, struct Function_Field *function_field) {
 // Check element type. This will determine iteration length
 	switch (element->kind) {
 		case LINEAR: { // Two nodes
@@ -278,10 +278,11 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 							 gsl_function constant_vector;
 
 							 struct Constant_Vector_Funcs p = {
-								 driving_func,
+								 function_field,
 								 element->element.L2.shape_func[n],
+								 &element->element.L2.jacobian,
 								 &element->element.L2.iso_conversion,
-								 &element->element.L2.jacobian
+
 							 };
 
 							 constant_vector.function = &constant_vector_composition;
@@ -315,10 +316,10 @@ gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driv
 						   gsl_function constant_vector;
 
 						   struct Constant_Vector_Funcs p = {
-							   driving_func,
+							   function_field,
 							   element->element.L3.shape_func[n],
+							   &element->element.L3.jacobian,
 							   &element->element.L3.iso_conversion,
-							   &element->element.L3.jacobian
 						   };
 
 						   constant_vector.function = &constant_vector_composition;
@@ -434,7 +435,7 @@ gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, 
 
 }
 
-int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, double (*func) (double), bool output_global_arrays) {
+int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, struct Function_Field *function_field, bool output_global_arrays) {
 	// First, check if the input mesh has valid node and element arrays
 	if (input_mesh->connectivity_grid == NULL || input_mesh->elements == NULL) {
 		printf("ERROR: Provided mesh is not properly loaded with element and node information.\nPlease ensure that the `parse_input_file` function has been called to populate the object, or check for other errors.\n");
@@ -450,7 +451,7 @@ int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, d
 	// Now, iterate through the elements and solve for the local coefficient matrix and constant vectors 
 	for (int e = 0; e < input_mesh->num_elements; e++) {
 		// Calculate the constant vector
-		gsl_vector* constant_local = output_constant_vector(&input_mesh->elements[e], func);
+		gsl_vector* constant_local = output_constant_vector(&input_mesh->elements[e], function_field);
 
 		// Calculate the coefficient matrix
 		gsl_matrix* coefficient_local = output_coefficient_matrix(&input_mesh->elements[e], a, b);

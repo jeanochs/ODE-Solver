@@ -10,6 +10,8 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_permutation.h>
 
+#include "function_field.h"
+
 
 typedef enum {
 	LINEAR,
@@ -75,11 +77,11 @@ struct ODE_Solution {
 
 // Main Functions
 int parse_input_file(FILE* input_stream, struct Mesh* mesh_object, Element_2D_Type mesh_kind);
-int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, double (*driving_func) (double), bool output_global_arrays);
+int solve_ode_constant(struct Mesh* input_mesh, struct ODE_Solution* solution, double a, double b, double d1, double d2, struct Function_Field *function_field, bool output_global_arrays);
 int output_solution_data(struct Mesh* input_mesh, struct ODE_Solution* input_solution);
 
 // Creation Functions
-gsl_vector* output_constant_vector(struct Element_Linear* element, double (*driving_func) (double));
+gsl_vector* output_constant_vector(struct Element_Linear* element, struct Function_Field *function_field);
 gsl_matrix* output_coefficient_matrix(struct Element_Linear* element, double a, double b);
 void create_element_L2(struct Element_Linear* e, double node1, double node2);
 void create_element_L3(struct Element_Linear* e, double node1, double node2, double node3);
@@ -90,10 +92,10 @@ void free_solution_memory(struct ODE_Solution* solution);
 // Composition functions
 
 struct Constant_Vector_Funcs {
-	double (*nonhomo) (double);
+	struct Function_Field *function_field;
 	double (*shape) (double);
-	gsl_function* converter;
-	gsl_function* jacobian;
+	gsl_function *jacobian;
+	gsl_function *converter;
 
 };
 

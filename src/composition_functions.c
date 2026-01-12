@@ -10,14 +10,15 @@
 
 double constant_vector_composition(double zeta, void* func_params) {
 	struct Constant_Vector_Funcs* p = (struct Constant_Vector_Funcs*) func_params;
-	double (*f) (double) = p->nonhomo;
+	struct Function_Field *data_field = p->function_field;
 	double (*shape) (double) = p->shape;
 
-	// Since the function is given in terms of x, teh conversion from zeta to the crresponding x-value is done by the below equation.
-	double x_value = GSL_FN_EVAL(p->converter, zeta);
 	double jacobian = GSL_FN_EVAL(p->jacobian, zeta);
+	double x_value = GSL_FN_EVAL(p->converter, zeta); // Convert from ispoarametric to physical
+	double f_result;
+	f_eval(data_field, x_value, &f_result);
 
-	return f(x_value)*shape(zeta)*jacobian;
+	return f_result*shape(zeta)*jacobian;
 
 }
 
