@@ -272,5 +272,7 @@ Command:
 
 ![Nonhomogenous Case 5](assets/nonhomo_case5.png)
 
+## License
+MIT License — see the LICENSE file for details.
 
 
