@@ -21,3 +21,10 @@ TESTING.html
 input_mesh.in
 results.png
 solution_output.dat
+
+# Ignore specially generated fields
+special_exponential_field.dat
+special_sine_field.dat
+
+# Ignore my custom function generator
+function_field_gen.py
