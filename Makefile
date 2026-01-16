@@ -9,8 +9,9 @@ LIB_PATH = -L./$(BUILD_DIR)
 
 LIB_OUTPUT = $(BUILD_DIR)/libode.a
 
-SOURCE = src/fe_section.c
-BUILD_OBJ = $(BUILD_DIR)/$(notdir $(SOURCE:.c=.o))
+SOURCE = src/fe_section.c \
+		 src/function_field.c
+BUILD_OBJ = $(SOURCE:src/%.c=./$(BUILD_DIR)/%.o)
 AUX_SOURCE = src/composition_functions.c \
 			 src/shape_functions.c
 
@@ -18,6 +19,8 @@ EXE = solver.out
 EXE_SOURCE = src/main.c
 EXE_OBJECT = $(BUILD_DIR)/$(notdir $(EXE_SOURCE:.c=.o))
 LINK_FLAG = -lode -lgsl -lm
+
+CC_FLAGS = -g -O0
 
 .PHONY = lib clean_all main
 
@@ -28,7 +31,7 @@ $(EXE): $(EXE_OBJECT) $(LIB_OUTPUT) | $(BUILD_DIR)
 	$(CC) $(INCLUDE_PATH) $(LIB_PATH) -O2 -Wall -Wextra $< -o $@ $(LINK_FLAG)
 
 $(EXE_OBJECT): $(EXE_SOURCE) | $(BUILD_DIR)
-	$(CC) $(INCLUDE_PATH) -O2 -Wall -Wextra -c $< -o $@
+	$(CC) $(INCLUDE_PATH) $(CC_FLAGS) -c $< -o $@
 
 # Rules for the static library build
 lib: $(LIB_OUTPUT)
@@ -36,8 +39,8 @@ lib: $(LIB_OUTPUT)
 $(LIB_OUTPUT): $(BUILD_OBJ) | $(BUILD_DIR)
 	$(AR) $(AR_FLAGS) $@ $^
 
-$(BUILD_OBJ): $(SOURCE) $(AUX_SOURCE) | $(BUILD_DIR)
-	$(CC) $(INCLUDE_PATH) -O2 -Wall -Wextra -c $< -o $@
+$(BUILD_DIR)/%.o: src/%.c $(AUX_SOURCE) | $(BUILD_DIR)
+	$(CC) $(INCLUDE_PATH) $(CC_FLAGS) -c $< -o $@
 
 # Ensure that the build directory exists
 $(BUILD_DIR):

@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 struct Function_Field {
 	double *f_values;
@@ -12,6 +13,7 @@ struct Function_Field {
 };
 
 int create_function_field(struct Function_Field *field, double start, double end, double number_of_points, double (*generating_func) (double));
+int input_function_field(struct Function_Field *field, FILE *file_stream);
 int output_function_field(struct Function_Field *field, char *filename);
 int f_eval(struct Function_Field *field, double x, double *f);
 void free_function_field(struct Function_Field *field);

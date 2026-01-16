@@ -25,7 +25,50 @@ int create_function_field(struct Function_Field *field, double start, double end
 	field->number_of_points = number_of_points;
 	field->step_size = step_size;
 
+	return 0;
+
 }
+
+int input_function_field(struct Function_Field *field, FILE *file_stream) {
+	// Parse the first line of the file to get the step size and number of points
+	char buffer[300];
+
+	if (fgets(buffer, 300, file_stream) == NULL) {
+		fprintf(stderr, "There was an issue with opening the file. Please try again.\n");
+		return 1;
+	}
+
+	// Split up
+	size_t num_points = atoi(strtok(buffer, "\t"));
+	double step_size = atof(strtok(NULL, "\t"));
+
+	// Allocate the arrays
+	double *x_point = malloc(num_points*sizeof(double));
+	double *f_point = malloc(num_points*sizeof(double));
+
+	// Parse through each line, get the numbers, and add to the arrays
+	int counter = 0;
+	while (fgets(buffer, 300, file_stream) != NULL) {
+		// Split up the numbers
+		double x_p = atof(strtok(buffer, "\t"));
+		double f_p = atof(strtok(NULL, "\t"));
+
+		x_point[counter] = x_p;
+		f_point[counter] = f_p;
+		counter++;
+
+	}
+
+	// Setup the Function Field struct
+	field->f_values = f_point;
+	field->x_values = x_point;
+	field->number_of_points = num_points;
+	field->step_size = step_size;
+
+	return 0;
+
+}
+
 
 int output_function_field(struct Function_Field *field, char *filename) {
 	FILE *dat_file = fopen(filename, "w");
@@ -35,6 +78,12 @@ int output_function_field(struct Function_Field *field, char *filename) {
 		return 1;
 
 	}
+
+	// Print the header
+	double np = field->number_of_points;
+	double ss = field->step_size;
+
+	fprintf(dat_file, "%f\t%f\n", np, ss);
 
 	for (int i = 0; i < field->number_of_points; i++) {
 		double x = field->x_values[i];
