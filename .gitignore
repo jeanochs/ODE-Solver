@@ -11,9 +11,6 @@ build/
 # Ignore the mesh used for studies
 mesh.in
 
-# Ignore the main program (for now)
-main.c
-
 # Ignore the preview HTML file
 TESTING.html
 
